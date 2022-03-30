@@ -1,5 +1,0 @@
-Authentication/authorization middleware
-
-
---> generate account number based on account type e.g current accounts begin with 2 and savings accounts begin with 3
---> automate sending emails to the parties of a transaction
