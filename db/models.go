@@ -7,13 +7,14 @@ const USERS_TABLE = `
 		lastName VARCHAR(20),
 		otherName VARCHAR(20) DEFAULT NULL,
 		gender VARCHAR(1),
-		homeAddress VARCHAR(100),
-		email VARCHAR(50),
-		phoneNum INTEGER,
-		otherNum INTEGER DEFAULT NULL,
+		address VARCHAR(100),
+		email VARCHAR(50) UNIQUE,
+		phoneNum VARCHAR(20),
+		otherNum VARCHAR(20) DEFAULT NULL,
 		kinName VARCHAR(60),
-		kinNumber INTEGER,
-		kinRelationship VARCHAR(50)
+		kinNumber VARCHAR(20),
+		kinRelationship VARCHAR(50),
+		passwordHash VARCHAR(200)
 	);
 
 `
@@ -49,22 +50,22 @@ type UserStruct struct {
 	LastName        string `bson:"lastName" json:"lastName"`
 	OtherName       string `bson:"otherName" json:"otherName"`
 	Email           string `bson:"email" json:"email"`
-	Gender          rune   `bson:"gender" json:"gender"`
-	PhoneNum        int    `bson:"phoneNum" json:"phoneNum"`
-	OtherNum        int    `bson:"otherNum" json:"otherNum"`
+	Gender          string `bson:"gender" json:"gender"`
+	PhoneNum        string `bson:"phoneNum" json:"phoneNum"`
+	OtherNum        string `bson:"otherNum,omitempty" json:"otherNum,omitempty"`
 	Address         string `bson:"address" json:"address"`
 	KinName         string `bson:"kinName" json:"kinName"`
-	KinNumber       int    `bson:"kinNumber" json:"kinNumber"`
+	KinNumber       string `bson:"kinNumber" json:"kinNumber"`
 	KinRelationship string `bson:"kinRelationship" json:"kinRelationship"`
 	PasswordHash    string `bson:"passwordHash,omitempty" json:"passwordHash,omitempty"`
 }
 
 type AcctStruct struct {
-	AcctId     int  `bson:"acctId" json:"acctId"`
-	UserId     int  `bson:"userId" json:"userId"`
-	CurrentBal int  `bson:"currentBal" json:"currentBal"`
-	AcctType   rune `bson:"acctType" json:"acctType"`
-	AcctNum    int  `bson:"acctNum" json:"acctNum"`
+	AcctId     int    `bson:"acctId" json:"acctId"`
+	UserId     int    `bson:"userId" json:"userId"`
+	CurrentBal int    `bson:"currentBal" json:"currentBal"`
+	AcctType   string `bson:"acctType" json:"acctType"`
+	AcctNum    int    `bson:"acctNum" json:"acctNum"`
 }
 
 type TxnStruct struct {

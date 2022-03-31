@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	models "github.com/AbdulkarimOgaji/kkmoney/db"
@@ -19,6 +20,7 @@ func (db *DB) getAccounts(c *gin.Context) {
 			"success": false,
 			"message": "failed to fetch accounts",
 			"payload": nil,
+			"error":   err,
 		})
 		return
 	}
@@ -49,6 +51,7 @@ func (db *DB) getUserAccounts(c *gin.Context) {
 			"success": false,
 			"message": "failed to fetch accounts",
 			"payload": nil,
+			"error":   err,
 		})
 		return
 	}
@@ -69,7 +72,7 @@ func (db *DB) getUserAccounts(c *gin.Context) {
 func (db *DB) getAcctById(c *gin.Context) {
 	id := c.Param("acct-id")
 	sql := `
-		SELECT * FROM users
+		SELECT * FROM accounts
 		WHERE acctId = ?
 	`
 	var acct models.AcctStruct
@@ -81,13 +84,16 @@ func (db *DB) getAcctById(c *gin.Context) {
 		&acct.AcctNum,
 	)
 	if err != nil {
+		log.Println("queryrow error: ", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Failed to fetch account",
 			"payload": nil,
+			"error":   err,
 		})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "fetched account successfully",
@@ -106,6 +112,7 @@ func (db *DB) createAcct(c *gin.Context) {
 			"success": false,
 			"message": "invalid request body",
 			"payload": nil,
+			"error":   err,
 		})
 		return
 	}
@@ -130,6 +137,7 @@ func (db *DB) createAcct(c *gin.Context) {
 			"success": false,
 			"message": "Internal Server Error",
 			"error":   err,
+			"payload": nil,
 		})
 		return
 	}
@@ -150,10 +158,12 @@ func (db *DB) updateAcct(c *gin.Context) {
 	var acct models.AcctStruct
 	err := c.BindJSON(&acct)
 	if err != nil {
+		log.Println("binding error: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "invalid request body",
 			"payload": nil,
+			"error":   err,
 		})
 		return
 	}
@@ -164,29 +174,32 @@ func (db *DB) updateAcct(c *gin.Context) {
 	`
 	stmt, err := db.driver.Prepare(sql)
 	if err != nil {
+		log.Println("sql error: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "invalid request body",
 			"payload": nil,
+			"error":   err,
 		})
 		return
 	}
 	r, err := stmt.Exec(acct.AcctType, id)
 
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to update account",
+			"payload": nil,
+		})
+		return
+	}
 	// return error if no row affected
 	if n, _ := r.RowsAffected(); n < 1 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "Request caused no alterations to the database",
 			"payload": nil,
-		})
-		return
-	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "Failed to update account",
-			"payload": nil,
+			"error":   "Request caused no alterations",
 		})
 		return
 	}
@@ -211,23 +224,27 @@ func (db *DB) deleteAcct(c *gin.Context) {
 			"success": false,
 			"message": "Invalid request",
 			"payload": nil,
+			"error":   err,
 		})
 		return
 	}
 	r, err := stmt.Exec(id)
-	if n, _ := r.RowsAffected(); n < 1 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "Request caused no alterations to the database",
-			"payload": nil,
-		})
-		return
-	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Failed to delete account",
 			"payload": nil,
+			"error":   err,
+		})
+		return
+	}
+	if n, _ := r.RowsAffected(); n < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Request caused no alterations to the database",
+			"payload": nil,
+			"error":   "Request caused no alterations",
 		})
 		return
 	}

@@ -36,9 +36,12 @@ func StartServer() {
 	r.POST("api/v1/createTxn", dbService.createTxn)
 	r.POST("api/v1/createAcct", dbService.createAcct)
 
-	r.PUT("api/v1/editUser", dbService.updateUser)
-	r.PUT("api/v1/editAcct", dbService.updateAcct)
+	r.PUT("api/v1/editUser/:user-id", dbService.updateUser)
+	r.PUT("api/v1/editAcct/:acct-id", dbService.updateAcct)
 
+	r.DELETE("api/v1/deleteUser/:user-id", dbService.deleteUser)
+	r.DELETE("api/v1/deleteAcct/:acct-id", dbService.deleteAcct)
+	r.Run(":8000")
 	// connect to mysql
 	//initialize gin
 	// set up routes

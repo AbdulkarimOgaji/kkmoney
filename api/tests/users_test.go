@@ -3,6 +3,7 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -10,22 +11,69 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type Response struct {
+type PayloadTypeUser struct {
+	user models.UserStruct
+}
+type PayloadTypeUsers struct {
+	user models.UserStruct
+}
+
+type ResponseOne struct {
 	message string
 	status  bool
 	Err     bool `bson:"error" json:"error"`
-	payload interface{}
+	payload PayloadTypeUser
+}
+type ResponseMany struct {
+	message string
+	status  bool
+	Err     bool `bson:"error" json:"error"`
+	payload PayloadTypeUsers
 }
 
-func getResBody(resp *http.Response, t *testing.T) Response {
-	var r Response
-	var body []byte
-	resp.Body.Read(body)
-	err := json.Unmarshal(body, &r)
+func getResBodyOne(resp *http.Response, t *testing.T) ResponseOne {
+	defer resp.Body.Close()
+	var r ResponseOne
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	err := json.Unmarshal(bodyBytes, &r)
 	if err != nil {
 		t.Fatal("failed to unmarshal response body", err)
 	}
 	return r
+}
+func getResBodyMany(resp *http.Response, t *testing.T) ResponseMany {
+	defer resp.Body.Close()
+	var r ResponseMany
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	err := json.Unmarshal(bodyBytes, &r)
+	if err != nil {
+		t.Fatal("failed to unmarshal response body", err)
+	}
+	return r
+}
+
+func TestCreateUser(t *testing.T) {
+	jsonBody := `{
+	"firstName": "Abba",
+	"lastName": "Sadiq",
+	"otherName": "Yunusa",
+	"email": "exapmle@udusok.edu.ng",
+	"phoneNum": "07039666042",
+	"otherNum": "",
+	"gender": "M",
+	"address": "6 Edmund Crescent NIMR yaba, lagos, Nigeria",
+	"kinName": "Yunusa Ogaji",
+	"kinNumber": "08055603698",
+	"kinRelationship": "Father",
+	"passwordHash": "yusufOgaji"
+	}`
+	reqBody := bytes.NewBuffer([]byte(jsonBody))
+	resp, err := http.Post("http://localhost:8000/api/v1/createUser", "application/json", reqBody)
+	if err != nil {
+		t.Fatal("Failed to send request: ", err)
+	}
+	require.Equal(t, 201, resp.StatusCode, "You should get a 201 response")
+
 }
 
 func TestGetUsers(t *testing.T) {
@@ -41,16 +89,25 @@ func TestGetUserById(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resBody := getResBody(response, t)
 	require.Equal(t, 200, response.StatusCode, "The status code should be 200")
-	require.Equal(t, "1", resBody.payload.(models.UserStruct).UserId)
+
 }
 
 func TestUpdateUser(t *testing.T) {
 	jsonBody := `{
-		"userId": 1,
-		"firstName": "Abdulkarim",
-		"lastName": "Ogaji"
+	"userId": 1,
+	"firstName": "Abdulkarim",
+	"lastName": "Ogaji",
+	"otherName": "Yunusa",
+	"email": "updatedE@mail002@gmail.com",
+	"phoneNum": "08166629550",
+	"otherNum": "",
+	"gender": "M",
+	"address": "6 Edmund Crescent NIMR yaba, lagos, Nigeria",
+	"kinName": "Ahmed Ogaji",
+	"kinNumber": "08036281855",
+	"kinRelationship": "Brother"
+
 	}`
 	reqBody := bytes.NewBuffer([]byte(jsonBody))
 	req, err := http.NewRequest("PUT", "http://localhost:8000/api/v1/editUser/1", reqBody)
@@ -63,10 +120,10 @@ func TestUpdateUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resBody := getResBody(resp, t)
+	resBody := getResBodyOne(resp, t)
 	switch resp.StatusCode {
 	case 200:
-		require.Equal(t, "Abdulkarim", resBody.payload.(models.UserStruct).FirstName, "FIrstname should have updated to Abdulkarim")
+		require.Equal(t, "Abdulkarim", resBody.payload.user.FirstName, "FIrstname should have updated to Fatima")
 	case http.StatusBadRequest:
 		require.Equal(t, "Request caused no alterations to the database", resBody.message, "The rows should not have been affected")
 	default:
@@ -75,21 +132,14 @@ func TestUpdateUser(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	response, err := http.Get("http://localhost:8000/api/v1/deleteUser/1")
+	req, err := http.NewRequest("DELETE", "http://localhost:8000/api/v1/deleteUser/1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	resBody := getResBody(response, t)
+	client := &http.Client{}
+	response, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
 	require.Equal(t, 200, response.StatusCode, "The status code should be 200")
-	require.Equal(t, "user deleted successfully", resBody.message)
 }
-
-// func TestCreateUser(t *testing.T) {
-// 	jsonBody := `{
-// 		"userId": 1,
-// 		"firstName": "Abdulkarim",
-// 		"lastName": "Ogaji"
-// 	}`
-// 	reqBody := bytes.NewBuffer([]byte(jsonBody))
-// 	resp, err := http.Post("http://localhost:8000/api/v1/createUser", "application/json", reqBody)
-// }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	models "github.com/AbdulkarimOgaji/kkmoney/db"
@@ -12,7 +13,7 @@ func (db *DB) getUsers(c *gin.Context) {
 	var users []models.UserStruct
 
 	sql := `
-		SELECT (userId, firstName, lastName, otherName, email, phoneNum, otherNum, gender, address, kinName, kinNumber, kinRelationship) FROM users
+		SELECT userId, firstName, lastName, otherName, email, phoneNum, otherNum, gender, address, kinName, kinNumber, kinRelationship FROM users
 	`
 	rows, err := db.driver.Query(sql)
 	if err != nil {
@@ -20,6 +21,7 @@ func (db *DB) getUsers(c *gin.Context) {
 			"success": false,
 			"message": "failed to fetch users",
 			"payload": nil,
+			"error":   err,
 		})
 		return
 	}
@@ -51,7 +53,7 @@ func (db *DB) getUsers(c *gin.Context) {
 func (db *DB) getUserById(c *gin.Context) {
 	id := c.Param("user-id")
 	sql := `
-		SELECT (userId, firstName, lastName, otherName, email, phoneNum, otherNum, gender, address, kinName, kinNumber, kinRelationship) FROM users
+		SELECT userId, firstName, lastName, otherName, email, phoneNum, otherNum, gender, address, kinName, kinNumber, kinRelationship FROM users
 		WHERE userId = ?
 	`
 	var user models.UserStruct
@@ -93,6 +95,8 @@ func (db *DB) createUser(c *gin.Context) {
 	// store that in the db
 	err := c.BindJSON(&user)
 	if err != nil {
+		log.Println(err)
+		log.Println(user)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "invalid request body",
@@ -105,7 +109,23 @@ func (db *DB) createUser(c *gin.Context) {
 	`
 	// generate passwordHash
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(user.PasswordHash), bcrypt.DefaultCost)
-	stmt, _ := db.driver.Prepare(sql)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to generate password Hash",
+			"error":   err,
+		})
+		return
+	}
+	stmt, err := db.driver.Prepare(sql)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "sql statement error",
+			"payload": nil,
+			"error":   err,
+		})
+	}
 	result, err := stmt.Exec(
 		user.FirstName,
 		user.LastName,
@@ -146,26 +166,28 @@ func (db *DB) updateUser(c *gin.Context) {
 	var user models.UserStruct
 	err := c.BindJSON(&user)
 	if err != nil {
+		log.Println("Bind json error: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "invalid request body",
 			"payload": nil,
+			"error":   err,
 		})
 		return
 	}
 	sql := `
 		UPDATE users
 		SET firstName = ?
-		SET lastName = ?
-		SET otherName = ?
-		SET email = ?
-		SET phoneNum = ?
-		SET otherNum = ?
-		SET gender = ?
-		SET address = ?
-		SET kinName = ?
-		SET kinNumber = ?
-		SET kinRelationship = ?
+		, lastName = ?
+		, otherName = ?
+		, email = ?
+		, phoneNum = ?
+		, otherNum = ?
+		, gender = ?
+		, address = ?
+		, kinName = ?
+		, kinNumber = ?
+		, kinRelationship = ?
 		WHERE userId = ?
 	`
 	stmt, err := db.driver.Prepare(sql)
@@ -178,7 +200,6 @@ func (db *DB) updateUser(c *gin.Context) {
 		return
 	}
 	r, err := stmt.Exec(
-		sql,
 		user.FirstName,
 		user.LastName,
 		user.OtherName,
@@ -192,7 +213,17 @@ func (db *DB) updateUser(c *gin.Context) {
 		user.KinRelationship,
 		id,
 	)
-	if n, _ := r.RowsAffected(); n < 1 {
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to update user",
+			"payload": nil,
+			"error":   err,
+		})
+		return
+	}
+	n, _ := r.RowsAffected()
+	if n < 1 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "Request caused no alterations to the database",
@@ -200,14 +231,7 @@ func (db *DB) updateUser(c *gin.Context) {
 		})
 		return
 	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "Failed to update user",
-			"payload": nil,
-		})
-		return
-	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "updated user successfully",
@@ -220,7 +244,7 @@ func (db *DB) updateUser(c *gin.Context) {
 func (db *DB) deleteUser(c *gin.Context) {
 	id := c.Param("user-id")
 	sql := `
-		DELETE users
+		DELETE FROM users
 		WHERE userId = ?
 	`
 	stmt, err := db.driver.Prepare(sql)
