@@ -99,7 +99,7 @@ func TestUpdateUser(t *testing.T) {
 	"firstName": "Abdulkarim",
 	"lastName": "Ogaji",
 	"otherName": "Yunusa",
-	"email": "updatedE@mail002@gmail.com",
+	"email": "abdulkarimogaji002@gmail.com",
 	"phoneNum": "08166629550",
 	"otherNum": "",
 	"gender": "M",
@@ -107,7 +107,6 @@ func TestUpdateUser(t *testing.T) {
 	"kinName": "Ahmed Ogaji",
 	"kinNumber": "08036281855",
 	"kinRelationship": "Brother"
-
 	}`
 	reqBody := bytes.NewBuffer([]byte(jsonBody))
 	req, err := http.NewRequest("PUT", "http://localhost:8000/api/v1/editUser/1", reqBody)
