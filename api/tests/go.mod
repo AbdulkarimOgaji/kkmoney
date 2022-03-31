@@ -1,4 +1,4 @@
-module tests
+module github.com/AbdulkarimOgaji/kkmoney/api/tests
 
 go 1.18
 

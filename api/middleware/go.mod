@@ -1,4 +1,4 @@
-module middleware
+module github.com/AbdularimOgaji/kkmoney/api/middleware
 
 go 1.18
 

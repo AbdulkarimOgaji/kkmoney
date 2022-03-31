@@ -1,4 +1,4 @@
-module db
+module github.com/AbdulkarimOgaji/kkmoney/db
 
 go 1.18
 

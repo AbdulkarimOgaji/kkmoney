@@ -3,12 +3,13 @@ package middleware
 import (
 	"fmt"
 	"log"
+	"os"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
 
-const SecretKey = "MyNameIsAbdulkarim"
+var SecretKey = []byte(os.Getenv("KK_MONEY_SECRET_KEY"))
 
 func AuthorizeClient() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -26,7 +27,7 @@ func AuthorizeClient() gin.HandlerFunc {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method %v", token.Header["alg"])
 			}
-			return secretKey, nil
+			return SecretKey, nil
 		})
 		if err != nil {
 			c.AbortWithStatusJSON(401, gin.H{
