@@ -32,7 +32,7 @@ jobs:
         mysql database: 'kkmoney' # Optional, default value is "test". The specified database which will be create
         mysql root password: 'grandmaster002' # Required if "mysql user" is empty, default is empty. The root superuser password
         mysql user: 'root' # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Can use secrets, too
-
+        mysql password: 'grandmaster002'
     - name: Install golang-migrate
       run: |
         curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.1/migrate.linux-amd64.tar.gz | tar xvz
