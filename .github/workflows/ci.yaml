@@ -33,6 +33,12 @@ jobs:
         mysql root password: 'grandmaster002' # Required if "mysql user" is empty, default is empty. The root superuser password
         mysql user: 'root' # Required if "mysql root password" is empty, default is empty. The superuser for the specified database. Can use secrets, too
 
+    - name: Install golang-migrate
+      run: |
+        curl -L https://github.com/golang-migrate/migrate/releases/download/$version/migrate.$platform-amd64.tar.gz | tar xvz
+        sudo mv migrate.linux-amd64 /usr/bin/migrate
+        which migrate
+        
     - name: Migrate database
       run: make migrateup
 
