@@ -1,0 +1,5 @@
+fix deadlock when trying to make transaction
+add api routes
+add a mock db to test api routes
+use git workflow
+make the docker image
